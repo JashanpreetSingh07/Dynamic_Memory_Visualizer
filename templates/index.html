@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Memory Management Visualizer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #E94560;
+            --secondary-color: #0F3460;
+            --background-color: #1A1A2E;
+            --card-color: #16213E;
+            --text-color: #FFFFFF;
+            --text-secondary: #E0E0E0;
+            --success-color: #4CAF50;
+            --warning-color: #FF9800;
+            --error-color: #F44336;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, var(--secondary-color), var(--background-color));
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="none"/><path d="M0,50 L100,50 M50,0 L50,100" stroke="rgba(255,255,255,0.1)" stroke-width="1"/></svg>');
+            opacity: 0.1;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .header h1 i {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3));
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .project-info {
+            background-color: var(--card-color);
+            padding: 40px;
+            border-radius: 16px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .project-info::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+        }
+
+        .project-info h2 {
+            color: var(--primary-color);
+            margin-bottom: 25px;
+            font-size: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            position: relative;
+        }
+
+        .project-info h2 i {
+            font-size: 1.8rem;
+            color: var(--primary-color);
+            filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.2));
+        }
+
+        .project-info p {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            margin-bottom: 20px;
+            color: var(--text-secondary);
+        }
+
+        .project-info ul {
+            list-style-type: none;
+            padding-left: 20px;
+            margin-bottom: 20px;
+        }
+
+        .project-info li {
+            margin-bottom: 20px;
+            position: relative;
+            padding-left: 35px;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: var(--text-secondary);
+        }
+
+        .project-info li::before {
+            content: '•';
+            color: var(--primary-color);
+            position: absolute;
+            left: 10px;
+            font-size: 2em;
+            line-height: 1;
+            top: -5px;
+        }
+
+        .project-info li strong {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            background-color: var(--card-color);
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .tab {
+            padding: 15px 30px;
+            margin: 0 15px;
+            cursor: pointer;
+            border-radius: 8px;
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+            font-weight: 600;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tab i {
+            font-size: 1.2em;
+        }
+
+        .tab:hover {
+            background-color: var(--primary-color);
+            transform: translateY(-3px);
+            box-shadow: 0 4px 15px rgba(233, 69, 96, 0.3);
+        }
+
+        .tab.active {
+            background-color: var(--primary-color);
+            box-shadow: 0 4px 15px rgba(233, 69, 96, 0.3);
+        }
+
+        .section {
+            display: none;
+            animation: fadeIn 0.5s ease;
+            background-color: var(--card-color);
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .section h2 {
+            color: var(--primary-color);
+            margin-bottom: 25px;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 25px;
+            background-color: var(--secondary-color);
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        input, select {
+            padding: 12px 15px;
+            border: none;
+            border-radius: 6px;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            font-size: 1rem;
+            min-width: 200px;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px var(--primary-color);
+        }
+
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 6px;
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        button:hover {
+            background-color: #ff5c77;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(233, 69, 96, 0.3);
+        }
+
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: var(--secondary-color);
+            border-radius: 8px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .visualization {
+            margin-top: 30px;
+            padding: 25px;
+            background-color: var(--secondary-color);
+            border-radius: 12px;
+        }
+
+        .visualization h3 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            font-size: 1.4rem;
+        }
+
+        .frames-display {
+            display: flex;
+            gap: 15px;
+            margin: 25px 0;
+            flex-wrap: wrap;
+        }
+
+        .frame {
+            width: 70px;
+            height: 70px;
+            background-color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(233, 69, 96, 0.2);
+        }
+
+        .frame:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 15px rgba(233, 69, 96, 0.3);
+        }
+
+        .segments-display {
+            margin: 25px 0;
+        }
+
+        .segment {
+            height: 50px;
+            margin: 10px 0;
+            background-color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(233, 69, 96, 0.2);
+        }
+
+        .segment:hover {
+            transform: translateX(5px);
+            box-shadow: 0 6px 15px rgba(233, 69, 96, 0.3);
+        }
+
+        .graph-container {
+            width: 100%;
+            height: 350px;
+            background-color: white;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .graph-row {
+            display: flex;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        .graph-column {
+            flex: 1;
+        }
+
+        .graph-info {
+            background-color: var(--card-color);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 0.95em;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .graph-title {
+            margin-bottom: 10px;
+            color: var(--primary-color);
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .graph-row {
+                flex-direction: column;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            input, select {
+                width: 100%;
+            }
+
+            button {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        .memory-status {
+            background-color: var(--secondary-color);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .memory-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .memory-bar {
+            height: 20px;
+            background-color: var(--background-color);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .memory-used {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), #ff5c77);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-memory"></i> Dynamic Memory Management Visualizer</h1>
+            <p>An interactive tool for visualizing and understanding memory management techniques in operating systems</p>
+        </div>
+
+        <div class="project-info">
+            <h2><i class="fas fa-info-circle"></i>Overview</h2>
+            <p>Explore an interactive visualization of two fundamental memory management techniques in modern operating systems. Through real-time simulations and dynamic analytics, users can gain a clear understanding of how these methods function and influence system performance.</p>
+            
+            <ul>
+                <li>
+                    <strong>Paging:</strong> Divides memory into fixed-size blocks called pages, enabling efficient allocation and isolation. The visualizer demonstrates key page replacement algorithms—FIFO, LRU, and Random—while showcasing their effects on system performance through page fault analysis.
+                </li>
+                <li>
+                    <strong>Segmentation:</strong> Organizes memory into variable-sized segments based on the logical structure of a program. The simulation illustrates how segmentation manages memory allocation and deallocation, highlighting issues such as external fragmentation.
+                </li>
+            </ul>
+            
+            <p>Real-time graphs and performance statistics offer insights into memory utilization, page fault rates, and fragmentation patterns. This tool serves as an effective learning aid for students and professionals aiming to master essential operating system concepts.</p>
+        </div>
+        
+        <div class="tabs">
+            <div class="tab active" onclick="switchSimulation('paging')">
+                <i class="fas fa-file-alt"></i> Paging
+            </div>
+            <div class="tab" onclick="switchSimulation('segmentation')">
+                <i class="fas fa-layer-group"></i> Segmentation
+            </div>
+        </div>
+
+        <!-- Paging Section -->
+        <div id="pagingSection" class="section active">
+            <h2><i class="fas fa-file-alt"></i> Paging Simulation</h2>
+            <div class="controls">
+                <input type="number" id="numFrames" placeholder="Number of Frames">
+                <div class="input-group">
+                    <label for="replacement-algo">Replacement Algorithm:</label>
+                    <select id="replacement-algo">
+                        <option value="FIFO">FIFO</option>
+                        <option value="LRU">LRU</option>
+                        <option value="Optimal">Optimal</option>
+                        <option value="Random">Random</option>
+                    </select>
+                </div>
+                <button onclick="initializePaging()">
+                    <i class="fas fa-play"></i> Initialize
+                </button>
+            </div>
+            <div class="controls">
+                <input type="text" id="pagesInput" placeholder="Pages (comma-separated)">
+                <button onclick="processPages()">
+                    <i class="fas fa-cogs"></i> Process Pages
+                </button>
+                <button onclick="resetPaging()">
+                    <i class="fas fa-redo"></i> Reset
+                </button>
+            </div>
+            <div class="status" id="pagingStatus">
+                <i class="fas fa-info-circle"></i> Status: Ready
+            </div>
+            <div class="visualization">
+                <h3><i class="fas fa-th"></i> Frames</h3>
+                <div class="frames-display" id="framesDisplay"></div>
+                
+                <div class="graph-row">
+                    <div class="graph-column">
+                        <h3 class="graph-title"><i class="fas fa-chart-line"></i> Page Faults Over Time</h3>
+                        <div class="graph-info">
+                            Shows the cumulative number of page faults that occur as pages are accessed.
+                            A page fault occurs when a requested page is not in memory and needs to be loaded.
+                        </div>
+                        <div class="graph-container" id="pagingGraph"></div>
+                    </div>
+                    <div class="graph-column">
+                        <h3 class="graph-title"><i class="fas fa-project-diagram"></i> Page Access Pattern</h3>
+                        <div class="graph-info">
+                            Displays the sequence of page numbers being accessed over time.
+                            Helps visualize the locality of reference in the page access pattern.
+                        </div>
+                        <div class="graph-container" id="accessPatternGraph"></div>
+                    </div>
+                </div>
+                
+                <div class="graph-row">
+                    <div class="graph-column">
+                        <h3 class="graph-title"><i class="fas fa-chart-bar"></i> Frame Utilization</h3>
+                        <div class="graph-info">
+                            Shows the percentage of frames that are currently in use.
+                            Higher utilization indicates more efficient memory usage.
+                        </div>
+                        <div class="graph-container" id="frameUtilizationGraph"></div>
+                    </div>
+                    <div class="graph-column">
+                        <h3 class="graph-title"><i class="fas fa-chart-pie"></i> Page Fault Rate</h3>
+                        <div class="graph-info">
+                            Displays the rate of page faults per access.
+                            Lower rates indicate better performance of the replacement algorithm.
+                        </div>
+                        <div class="graph-container" id="faultRateGraph"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Segmentation Section -->
+        <div id="segmentationSection" class="section">
+            <h2><i class="fas fa-layer-group"></i> Segmentation Simulation</h2>
+            <div class="controls">
+                <input type="number" id="totalMemory" placeholder="Total Memory (e.g., 100)">
+                <button onclick="initializeSegmentation()">
+                    <i class="fas fa-play"></i> Initialize
+                </button>
+            </div>
+            <div class="controls">
+                <input type="number" id="segmentSize" placeholder="Segment Size">
+                <input type="text" id="segmentLabel" placeholder="Segment Label">
+                <button onclick="allocateSegment()">
+                    <i class="fas fa-plus"></i> Allocate Segment
+                </button>
+                <button onclick="freeSegment()">
+                    <i class="fas fa-minus"></i> Free Segment
+                </button>
+                <button onclick="resetSegmentation()">
+                    <i class="fas fa-redo"></i> Reset
+                </button>
+            </div>
+            <div class="status" id="segmentationStatus">
+                <i class="fas fa-info-circle"></i> Status: Ready
+            </div>
+            <div class="memory-status">
+                <div class="memory-info">
+                    <span>Total Memory: <span id="totalMemoryDisplay">0</span></span>
+                    <span>Used Memory: <span id="usedMemoryDisplay">0</span></span>
+                    <span>Free Memory: <span id="freeMemoryDisplay">0</span></span>
+                </div>
+                <div class="memory-bar">
+                    <div class="memory-used" id="memoryUsedBar"></div>
+                </div>
+            </div>
+            <div class="visualization">
+                <h3><i class="fas fa-th-large"></i> Memory Segments</h3>
+                <div class="segments-display" id="segmentsDisplay"></div>
+                
+                <div class="graph-row">
+                    <div class="graph-column">
+                        <h3 class="graph-title"><i class="fas fa-chart-line"></i> Free Memory Over Time</h3>
+                        <div class="graph-info">
+                            Tracks the amount of free memory available as segments are allocated and freed.
+                            Helps identify memory fragmentation issues.
+                        </div>
+                        <div class="graph-container" id="segmentationGraph"></div>
+                    </div>
+                    <div class="graph-column">
+                        <h3 class="graph-title"><i class="fas fa-puzzle-piece"></i> Memory Fragmentation</h3>
+                        <div class="graph-info">
+                            Shows the degree of memory fragmentation, calculated as the variance in segment sizes.
+                            Higher values indicate more fragmented memory.
+                        </div>
+                        <div class="graph-container" id="fragmentationGraph"></div>
+                    </div>
+                </div>
+                
+                <div class="graph-row">
+                    <div class="graph-column">
+                        <h3 class="graph-title"><i class="fas fa-chart-bar"></i> Dynamic Segment Size Distribution</h3>
+                        <div class="graph-info">
+                            Shows the distribution of segment sizes, automatically categorized based on the actual data.
+                            The categories adapt dynamically to show meaningful size ranges, helping analyze memory allocation patterns.
+                        </div>
+                        <div class="graph-container" id="segmentSizeGraph"></div>
+                    </div>
+                    <div class="graph-column">
+                        <h3 class="graph-title"><i class="fas fa-chart-line"></i> Segment Allocation Efficiency</h3>
+                        <div class="graph-info">
+                            Measures the overall efficiency of memory allocation based on three key metrics:
+                            memory utilization (40%), fragmentation (40%), and segment size distribution (20%).
+                            Higher scores indicate better memory management performance.
+                        </div>
+                        <div class="graph-container" id="utilizationGraph"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script>
+        // Simulation type switching
+        function switchSimulation(type) {
+            // Update tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelector(`.tab:nth-child(${type === 'paging' ? 1 : 2})`).classList.add('active');
+            
+            // Update sections
+            document.getElementById('pagingSection').classList.toggle('active', type === 'paging');
+            document.getElementById('segmentationSection').classList.toggle('active', type === 'segmentation');
+        }
+
+        // Global variables to store graph data
+        let pagingHistory = [];
+        let segmentationHistory = [];
+
+        // Paging functions
+        async function initializePaging() {
+            const numFrames = parseInt(document.getElementById('numFrames').value);
+            const replacementAlgo = document.getElementById('replacement-algo').value;
+            
+            const response = await fetch('/api/paging/initialize', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    num_frames: numFrames,
+                    replacement_algo: replacementAlgo
+                })
+            });
+            
+            const data = await response.json();
+            document.getElementById('pagingStatus').textContent = `Status: ${data.message}`;
+            updateFramesDisplay([]);
+            pagingHistory = [];
+            updatePagingGraphs([]);
+        }
+
+        async function processPages() {
+            const pagesInput = document.getElementById('pagesInput').value;
+            const pages = pagesInput.split(',').map(p => parseInt(p.trim())).filter(p => !isNaN(p));
+            
+            const response = await fetch('/api/paging/process', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ pages })
+            });
+            
+            const data = await response.json();
+            if (data.status === 'success') {
+                const lastResult = data.results[data.results.length - 1];
+                document.getElementById('pagingStatus').textContent = 
+                    `Status: Total faults: ${lastResult.total_faults}, Total hits: ${lastResult.total_hits}`;
+                updateFramesDisplay(lastResult.frames);
+                pagingHistory = pagingHistory.concat(data.results);
+                updatePagingGraphs(pagingHistory);
+            }
+        }
+
+        async function resetPaging() {
+            const response = await fetch('/api/paging/reset', {
+                method: 'POST'
+            });
+            
+            const data = await response.json();
+            document.getElementById('pagingStatus').textContent = `Status: ${data.message}`;
+            updateFramesDisplay([]);
+            pagingHistory = [];
+            updatePagingGraphs([]);
+        }
+
+        function updateFramesDisplay(frames) {
+            const display = document.getElementById('framesDisplay');
+            display.innerHTML = '';
+            frames.forEach(frame => {
+                const frameElement = document.createElement('div');
+                frameElement.className = 'frame';
+                frameElement.textContent = frame !== null ? frame : '';
+                display.appendChild(frameElement);
+            });
+        }
+
+        function updatePagingGraphs(results) {
+            if (results.length === 0) {
+                resetPagingGraphs();
+                return;
+            }
+
+            const x = results.map((_, i) => i + 1);
+            
+            // Page Faults Over Time
+            Plotly.newPlot('pagingGraph', [
+                {
+                    x: x,
+                    y: results.map(r => r.total_faults),
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: 'Page Faults',
+                    marker: { color: '#E94560' },
+                    line: { color: '#E94560' }
+                },
+                {
+                    x: x,
+                    y: results.map(r => r.total_hits),
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: 'Page Hits',
+                    marker: { color: '#4CAF50' },
+                    line: { color: '#4CAF50' }
+                }
+            ], {
+                title: 'Page Faults and Hits Over Time',
+                xaxis: { title: 'Access Number' },
+                yaxis: { title: 'Count' },
+                legend: {
+                    orientation: 'h',
+                    y: 1.1
+                }
+            });
+
+            // Page Access Pattern
+            Plotly.newPlot('accessPatternGraph', [{
+                x: x,
+                y: results.map(r => r.page),
+                type: 'scatter',
+                mode: 'lines+markers',
+                marker: { 
+                    color: results.map((_, i) => `hsl(${(i * 30) % 360}, 70%, 50%)`),
+                    size: 8
+                }
+            }], {
+                title: 'Page Access Pattern',
+                xaxis: { title: 'Access Number' },
+                yaxis: { title: 'Page Number' }
+            });
+
+            // Frame Utilization
+            Plotly.newPlot('frameUtilizationGraph', [{
+                x: x,
+                y: results.map(r => {
+                    const usedFrames = r.frames.filter(f => f !== null).length;
+                    return (usedFrames / r.frames.length) * 100;
+                }),
+                type: 'scatter',
+                mode: 'lines+markers',
+                marker: { color: '#2196F3' },
+                line: { color: '#2196F3' }
+            }], {
+                title: 'Frame Utilization',
+                xaxis: { title: 'Access Number' },
+                yaxis: { title: 'Utilization (%)' }
+            });
+
+            // Page Fault Rate
+            Plotly.newPlot('faultRateGraph', [{
+                x: x,
+                y: results.map((r, i) => {
+                    if (i === 0) return 0;
+                    return (r.total_faults - results[i-1].total_faults) / (i + 1) * 100;
+                }),
+                type: 'scatter',
+                mode: 'lines+markers',
+                marker: { color: '#FF9800' },
+                line: { color: '#FF9800' }
+            }], {
+                title: 'Page Fault Rate',
+                xaxis: { title: 'Access Number' },
+                yaxis: { title: 'Fault Rate (%)' }
+            });
+        }
+
+        function resetPagingGraphs() {
+            Plotly.newPlot('pagingGraph', [{
+                x: [],
+                y: [],
+                type: 'scatter',
+                mode: 'lines+markers'
+            }], {
+                title: 'Page Faults Over Time',
+                xaxis: { title: 'Access Number' },
+                yaxis: { title: 'Page Faults' }
+            });
+
+            Plotly.newPlot('accessPatternGraph', [{
+                x: [],
+                y: [],
+                type: 'scatter',
+                mode: 'lines+markers'
+            }], {
+                title: 'Page Access Pattern',
+                xaxis: { title: 'Access Number' },
+                yaxis: { title: 'Page Number' }
+            });
+
+            Plotly.newPlot('frameUtilizationGraph', [{
+                x: [],
+                y: [],
+                type: 'scatter',
+                mode: 'lines+markers'
+            }], {
+                title: 'Frame Utilization',
+                xaxis: { title: 'Access Number' },
+                yaxis: { title: 'Utilization (%)' }
+            });
+
+            Plotly.newPlot('faultRateGraph', [{
+                x: [],
+                y: [],
+                type: 'scatter',
+                mode: 'lines+markers'
+            }], {
+                title: 'Page Fault Rate',
+                xaxis: { title: 'Access Number' },
+                yaxis: { title: 'Fault Rate (%)' }
+            });
+        }
+
+        // Segmentation functions
+        async function initializeSegmentation() {
+            const totalMemory = parseInt(document.getElementById('totalMemory').value);
+            
+            const response = await fetch('/api/segmentation/initialize', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ total_memory: totalMemory })
+            });
+            
+            const data = await response.json();
+            document.getElementById('segmentationStatus').textContent = `Status: ${data.message}`;
+            updateSegmentsDisplay([]);
+            segmentationHistory = [];
+            updateSegmentationGraphs([], totalMemory);
+        }
+
+        async function allocateSegment() {
+            const size = parseInt(document.getElementById('segmentSize').value);
+            const label = document.getElementById('segmentLabel').value;
+            
+            const response = await fetch('/api/segmentation/allocate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ size, label })
+            });
+            
+            const data = await response.json();
+            document.getElementById('segmentationStatus').textContent = `Status: ${data.message}`;
+            updateSegmentsDisplay(data.segments);
+            segmentationHistory.push({
+                segments: data.segments,
+                free_memory: data.free_memory,
+                operation: 'allocate'
+            });
+            updateSegmentationGraphs(data.segments, data.free_memory);
+        }
+
+        async function freeSegment() {
+            const label = document.getElementById('segmentLabel').value;
+            
+            const response = await fetch('/api/segmentation/free', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ label })
+            });
+            
+            const data = await response.json();
+            document.getElementById('segmentationStatus').textContent = `Status: ${data.message}`;
+            updateSegmentsDisplay(data.segments);
+            segmentationHistory.push({
+                segments: data.segments,
+                free_memory: data.free_memory,
+                operation: 'free'
+            });
+            updateSegmentationGraphs(data.segments, data.free_memory);
+        }
+
+        async function resetSegmentation() {
+            const response = await fetch('/api/segmentation/reset', {
+                method: 'POST'
+            });
+            
+            const data = await response.json();
+            document.getElementById('segmentationStatus').textContent = `Status: ${data.message}`;
+            updateSegmentsDisplay([]);
+            segmentationHistory = [];
+            updateSegmentationGraphs([], 0);
+        }
+
+        function updateSegmentsDisplay(segments) {
+            const display = document.getElementById('segmentsDisplay');
+            display.innerHTML = '';
+            segments.forEach(segment => {
+                const segmentElement = document.createElement('div');
+                segmentElement.className = 'segment';
+                segmentElement.textContent = `${segment[2]} (${segment[1]} units)`;
+                display.appendChild(segmentElement);
+            });
+
+            // Update memory status
+            const totalMemory = parseInt(document.getElementById('totalMemory').value);
+            const usedMemory = segments.reduce((sum, seg) => sum + seg[1], 0);
+            const freeMemory = totalMemory - usedMemory;
+
+            document.getElementById('totalMemoryDisplay').textContent = totalMemory;
+            document.getElementById('usedMemoryDisplay').textContent = usedMemory;
+            document.getElementById('freeMemoryDisplay').textContent = freeMemory;
+            document.getElementById('memoryUsedBar').style.width = `${(usedMemory / totalMemory) * 100}%`;
+        }
+
+        function updateSegmentationGraphs(segments, free_memory) {
+            if (segments.length === 0 && segmentationHistory.length === 0) {
+                resetSegmentationGraphs();
+                return;
+            }
+
+            const x = segmentationHistory.map((_, i) => i + 1);
+            const totalMemory = parseInt(document.getElementById('totalMemory').value);
+            
+            // Memory Usage Over Time
+            Plotly.newPlot('segmentationGraph', [
+                {
+                    x: x,
+                    y: segmentationHistory.map(h => h.free_memory),
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: 'Free Memory',
+                    marker: { 
+                        color: '#4CAF50',
+                        size: 8,
+                        line: { color: '#2E7D32', width: 2 }
+                    },
+                    line: { color: '#4CAF50', width: 2 }
+                },
+                {
+                    x: x,
+                    y: segmentationHistory.map(h => totalMemory - h.free_memory),
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: 'Used Memory',
+                    marker: { 
+                        color: '#E94560',
+                        size: 8,
+                        line: { color: '#C62828', width: 2 }
+                    },
+                    line: { color: '#E94560', width: 2 }
+                }
+            ], {
+                title: 'Memory Usage Over Time',
+                xaxis: { title: 'Operation Number' },
+                yaxis: { title: 'Memory Size' },
+                legend: {
+                    orientation: 'h',
+                    y: 1.1
+                },
+                showlegend: true,
+                plot_bgcolor: 'rgba(0,0,0,0.1)',
+                paper_bgcolor: 'rgba(0,0,0,0)'
+            });
+
+            // Memory Fragmentation
+            const fragmentation = segmentationHistory.map(h => calculateFragmentation(h.segments, h.free_memory, totalMemory));
+            Plotly.newPlot('fragmentationGraph', [{
+                x: x,
+                y: fragmentation,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Fragmentation',
+                marker: { 
+                    color: fragmentation.map(f => `hsl(${Math.max(0, 120 - f * 1.2)}, 70%, 50%)`),
+                    size: 8,
+                    line: { color: '#FF9800', width: 2 }
+                },
+                line: { color: '#FF9800', width: 2 }
+            }], {
+                title: 'Memory Fragmentation',
+                xaxis: { title: 'Operation Number' },
+                yaxis: { 
+                    title: 'Fragmentation (%)',
+                    range: [0, 100]
+                },
+                showlegend: false,
+                plot_bgcolor: 'rgba(0,0,0,0.1)',
+                paper_bgcolor: 'rgba(0,0,0,0)'
+            });
+
+            // Segment Size Distribution
+            const sizes = segments.map(s => s[1]); // Get segment sizes
+            if (sizes.length > 0) {
+                // Calculate optimal size ranges based on actual data
+                const minSize = Math.min(...sizes);
+                const maxSize = Math.max(...sizes);
+                const range = maxSize - minSize;
+                
+                // Create dynamic size categories based on data distribution
+                const numCategories = Math.min(5, Math.max(3, Math.ceil(sizes.length / 2)));
+                const categorySize = range / numCategories;
+                
+                const sizeRanges = {};
+                const categoryLabels = [];
+                
+                for (let i = 0; i < numCategories; i++) {
+                    const start = minSize + (i * categorySize);
+                    const end = start + categorySize;
+                    const label = i === numCategories - 1 
+                        ? `>${Math.round(start)}` 
+                        : `${Math.round(start)}-${Math.round(end)}`;
+                    categoryLabels.push(label);
+                    sizeRanges[label] = sizes.filter(s => 
+                        i === numCategories - 1 ? s >= start : s >= start && s < end
+                    ).length;
+                }
+                
+                Plotly.newPlot('segmentSizeGraph', [{
+                    x: categoryLabels,
+                    y: Object.values(sizeRanges),
+                    type: 'bar',
+                    name: 'Segment Sizes',
+                    marker: { 
+                        color: categoryLabels.map((_, i) => `hsl(${(i * 360 / numCategories) % 360}, 70%, 50%)`),
+                        line: { color: '#000', width: 1 }
+                    }
+                }], {
+                    title: 'Dynamic Segment Size Distribution',
+                    xaxis: { 
+                        title: 'Size Range',
+                        tickangle: -45
+                    },
+                    yaxis: { title: 'Number of Segments' },
+                    plot_bgcolor: 'rgba(0,0,0,0.1)',
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    showlegend: false
+                });
+            } else {
+                Plotly.newPlot('segmentSizeGraph', [{
+                    x: [],
+                    y: [],
+                    type: 'bar'
+                }], {
+                    title: 'Dynamic Segment Size Distribution',
+                    xaxis: { title: 'Size Range' },
+                    yaxis: { title: 'Number of Segments' },
+                    showlegend: false
+                });
+            }
+
+            // Segment Allocation Efficiency
+            const efficiencyData = segmentationHistory.map((h, i) => {
+                if (i === 0) return 0;
+                
+                const prevSegments = segmentationHistory[i-1].segments;
+                const currentSegments = h.segments;
+                const prevFree = segmentationHistory[i-1].free_memory;
+                const currentFree = h.free_memory;
+                
+                // Calculate efficiency based on:
+                // 1. Memory utilization (higher is better)
+                // 2. Fragmentation (lower is better)
+                // 3. Segment size distribution (more balanced is better)
+                const utilization = ((totalMemory - currentFree) / totalMemory) * 100;
+                const fragmentation = calculateFragmentation(currentSegments, currentFree, totalMemory);
+                const sizeVariance = calculateSizeVariance(currentSegments);
+                
+                // Combine metrics into efficiency score (0-100)
+                const efficiency = Math.max(0, Math.min(100, 
+                    (utilization * 0.4) + // Weight for utilization
+                    ((100 - fragmentation) * 0.4) + // Weight for fragmentation
+                    ((100 - sizeVariance) * 0.2) // Weight for size distribution
+                ));
+                
+                return efficiency;
+            });
+
+            Plotly.newPlot('utilizationGraph', [{
+                x: segmentationHistory.map((_, i) => i + 1),
+                y: efficiencyData,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Allocation Efficiency',
+                marker: { 
+                    color: efficiencyData.map(e => `hsl(${Math.max(0, 120 - e * 1.2)}, 70%, 50%)`),
+                    size: 8,
+                    line: { color: '#000', width: 1 }
+                },
+                line: { color: '#4CAF50', width: 2 }
+            }], {
+                title: 'Segment Allocation Efficiency',
+                xaxis: { title: 'Operation Number' },
+                yaxis: { 
+                    title: 'Efficiency Score (%)',
+                    range: [0, 100]
+                },
+                plot_bgcolor: 'rgba(0,0,0,0.1)',
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                showlegend: false
+            });
+        }
+
+        function calculateFragmentation(segments, free_memory, total_memory) {
+            if (segments.length <= 1) return 0;
+            
+            // Sort segments by starting address
+            const sortedSegments = segments.sort((a, b) => a[0] - b[0]);
+            
+            // Calculate gaps between segments
+            let totalGaps = 0;
+            let prevEnd = 0;
+            
+            for (const segment of sortedSegments) {
+                const gap = segment[0] - prevEnd;
+                if (gap > 0) {
+                    totalGaps += gap;
+                }
+                prevEnd = segment[0] + segment[1];
+            }
+            
+            // Add gap after last segment
+            const lastGap = total_memory - prevEnd;
+            if (lastGap > 0) {
+                totalGaps += lastGap;
+            }
+            
+            // Calculate fragmentation as percentage of total memory
+            return (totalGaps / total_memory) * 100;
+        }
+
+        function calculateSizeVariance(segments) {
+            if (segments.length <= 1) return 0;
+            
+            const sizes = segments.map(s => s[1]);
+            const mean = sizes.reduce((a, b) => a + b, 0) / sizes.length;
+            const variance = sizes.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / sizes.length;
+            
+            // Normalize variance to percentage (0-100)
+            const maxVariance = Math.pow(mean, 2);
+            return (variance / maxVariance) * 100;
+        }
+
+        function resetSegmentationGraphs() {
+            segmentationHistory = [];
+            document.getElementById('totalMemoryDisplay').textContent = '0';
+            document.getElementById('usedMemoryDisplay').textContent = '0';
+            document.getElementById('freeMemoryDisplay').textContent = '0';
+            document.getElementById('memoryUsedBar').style.width = '0%';
+
+            Plotly.newPlot('segmentationGraph', [{
+                x: [],
+                y: [],
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Free Memory'
+            }, {
+                x: [],
+                y: [],
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Used Memory'
+            }], {
+                title: 'Memory Usage Over Time',
+                xaxis: { title: 'Operation Number' },
+                yaxis: { title: 'Memory Size' },
+                legend: {
+                    orientation: 'h',
+                    y: 1.1
+                }
+            });
+
+            Plotly.newPlot('fragmentationGraph', [{
+                x: [],
+                y: [],
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Fragmentation'
+            }], {
+                title: 'Memory Fragmentation',
+                xaxis: { title: 'Operation Number' },
+                yaxis: { title: 'Fragmentation (%)' }
+            });
+
+            Plotly.newPlot('segmentSizeGraph', [{
+                x: ['Small (<10%)', 'Medium (25-50%)', 'Large (50-75%)', 'Huge (>75%)'],
+                y: [0, 0, 0, 0],
+                type: 'bar',
+                name: 'Segment Sizes'
+            }], {
+                title: 'Segment Size Distribution',
+                xaxis: { title: 'Size Category' },
+                yaxis: { title: 'Number of Segments' }
+            });
+
+            Plotly.newPlot('utilizationGraph', [{
+                x: [],
+                y: [],
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Utilization'
+            }], {
+                title: 'Memory Utilization',
+                xaxis: { title: 'Operation Number' },
+                yaxis: { title: 'Utilization (%)' }
+            });
+        }
+    </script>
+</body>
+</html>
