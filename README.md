@@ -1,5 +1,5 @@
 Dynamic Memory Management Visualizer
-A web-based Operating System simulation tool that visually demonstrates dynamic
+A web-based Operating System simulation tool that visually demonstrates dynamic 
 memory management techniques such as paging, segmentation, and page replacement
 algorithms. The project provides an interactive interface to help students understand
 how memory is allocated, managed, and replaced in modern operating systems.
